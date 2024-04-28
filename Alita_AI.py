@@ -1,4 +1,5 @@
 import pyttsx3
+import requests
 import speech_recognition as sr
 import datetime
 import os
@@ -6,15 +7,19 @@ import cv2
 import pywhatkit
 import webbrowser
 import time
+from bs4 import BeautifulSoup
 from Conversation import jokes, quotes, riddles
 import  random
 import pyautogui
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
 
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[1].id)
-engine.setProperty('rate', 150)
+engine.setProperty('rate', 250)
 
 
 def speak(audio):
@@ -22,17 +27,39 @@ def speak(audio):
     print(audio)
     engine.runAndWait()
 
+def wait_until_alita():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening for 'Alita'...")
+        while True:
+            audio = r.listen(source)
+            try:
+                query = r.recognize_google(audio, language='en-in')
+                print(f"user said: {query}")
+                if "alita" in query.lower():
+                    print("Alita detected!")
+                    return True
+            except sr.UnknownValueError:
+                print("Sorry, I didn't catch that. Listening...")
+            except sr.RequestError:
+                print("Sorry, I'm having trouble processing your request. Listening...")
+
 def takecommand():
     r = sr.Recognizer()
     while True:
         with sr.Microphone() as source:
-            print("\rListening...")
+            print("Listening...")
             r.pause_threshold = 1
             try:
                 audio = r.listen(source, timeout=5, phrase_time_limit=15)
-                print("\rRecognizing...")
+                print("Recognizing...")
                 query = r.recognize_google(audio, language='en-in')
                 print(f"user said: {query}")
+                if "wait" in query.lower():
+                    speak("Waiting for your command...")
+                    wait_until_alita()
+                    speak("Resuming...")
+                    continue
                 return query.lower()
             except sr.WaitTimeoutError:
                 speak("Listening timed out. Please say something or say 'exit' to quit.")
@@ -40,6 +67,7 @@ def takecommand():
             except Exception as e:
                 speak("Say that again please...")
                 continue
+
 
 
 
@@ -88,40 +116,136 @@ def search_chatgpt(instruction):
 
 
 
+def open_application(app_name):
+    # Open Start menu
+    pyautogui.press('win')
+
+    # Wait for the Start menu to open
+    time.sleep(1)
+
+    # Type the name of the application in the search bar
+    pyautogui.write(app_name, interval=0.1)
+
+    # Press Enter to perform the search
+    pyautogui.press('enter')
+
+    # Wait for the search results to appear
+    time.sleep(2)
+
+    # Move the mouse to click on the application icon
+    # Adjust these coordinates based on your screen resolution and layout
+    pyautogui.moveTo(500, 400, duration=0.5)  # Adjust these coordinates
+    pyautogui.click()
+
+# Example usage
+
+def get_weather(city):
+    url = f"https://www.timeanddate.com/weather/india/{city}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, "html.parser")
+        temperature_elem = soup.find("div", class_="h2")
+        if temperature_elem:
+            temperature = temperature_elem.get_text()
+            return temperature
+        else:
+            return None
+    else:
+        return None
+
+
+def increase_volume(increment):
+    devices = AudioUtilities.GetSpeakers()
+    interface = devices.Activate(
+        IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+    volume = cast(interface, POINTER(IAudioEndpointVolume))
+    current_volume = volume.GetMasterVolumeLevelScalar()
+    new_volume = min(1.0, current_volume + increment)
+    volume.SetMasterVolumeLevelScalar(new_volume, None)
+
+def decrease_volume(decrement):
+    devices = AudioUtilities.GetSpeakers()
+    interface = devices.Activate(
+        IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+    volume = cast(interface, POINTER(IAudioEndpointVolume))
+    current_volume = volume.GetMasterVolumeLevelScalar()
+    new_volume = max(0.0, current_volume - decrement)
+    volume.SetMasterVolumeLevelScalar(new_volume, None)
 
 
 if __name__ == "__main__":
 
     wish()
     while True:
+
+        def volume_increase():
+            increase_volume(0.2)
+            speak("volume increased ")
+
+        def volume_decrease():
+            decrease_volume(0.2)
+            speak("volume decreased")
+
+        def show_desktop():
+            pyautogui.hotkey('win', 'd')
+
+        def close_application():
+            # Assuming the application is already focused
+            pyautogui.hotkey('alt', 'f4')
+            # Wait for a moment to ensure the window closes
+            time.sleep(1)
+
+
+
+        def minimize_application():
+            # Get the screen width and height
+            screen_width, screen_height = pyautogui.size()
+
+            # Calculate the position of the minimize button on the title bar
+            # These coordinates may vary depending on the operating system and theme
+            minimize_button_x = screen_width -150  # Adjust as needed
+            minimize_button_y = 10  # Adjust as needed
+
+            # Move the mouse to the minimize button position
+            pyautogui.moveTo(minimize_button_x, minimize_button_y, duration=0.5)
+
+            # Click to minimize the window
+            pyautogui.click()
+
+        def press_space():
+            pyautogui.press('space')
+
+        def maximize_application():
+            # Assuming the application is already focused
+            pyautogui.hotkey('win', 'up')
+
+
+
         def open_notepad():
             speak("Opening Notepad")
-            npath = "C:\\Windows\\notepad.exe"
-            os.startfile(npath)
+            open_application("notepad")
 
 
         def open_vs_code():
             speak("Opening vs Code")
-            vpath = "C:\\Users\\manik\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
-            os.startfile(vpath)
+            open_application("vs code")
 
 
         def open_command_prompt():
             speak("Opening command prompt")
-            os.system("start cmd")
+            open_application("command prompt")
 
 
         def open_camera():
             speak("Opening camera")
-            cap = cv2.VideoCapture(0)
-            while True:
-                ret, img = cap.read()
-                cv2.imshow('webcam', img)
-                k = cv2.waitKey(50)
-                if k == 15:
-                    break
-            cap.release()
-            cv2.destroyAllWindows()
+            open_application("camera")
+
+        def open_spotify():
+            speak("opening spotify")
+            open_application("soptify")
 
 
         def take_screenshot():
@@ -157,7 +281,44 @@ if __name__ == "__main__":
             speak("Goodbye Master")
             exit()
 
+        def open_weather():
+            speak("Sure, which city's weather would you like to know?")
+            city = takecommand().lower()
+            temperature = get_weather(city)
+            if temperature is not None:
+                speak(f"The current temperature in {city.capitalize()} is {temperature}.")
+            else:
+                speak("Sorry, I couldn't fetch the weather information for that city. Please try again.")
 
+
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        def remember_command():
+            speak("What would you like me to remember?")
+            item_to_remember = takecommand()
+            remember_item(item_to_remember)
+
+
+        remember_file = os.path.join(current_directory, "remembered_items.txt")
+
+
+        def remember_item(item):
+            speak(f"Sure, I'll remember that {item}.")
+            with open(remember_file, "a") as file:
+                file.write(item + "\n")
+
+
+        def retrieve_remembered_item():
+            try:
+                with open(remember_file, "r") as file:
+                    remembered_items = file.readlines()
+                    if remembered_items:
+                        speak("Here are the things I remember:")
+                        for item in remembered_items:
+                            speak(item.strip())
+                    else:
+                        speak("I'm sorry, but I don't remember anything.")
+            except FileNotFoundError:
+                speak("I'm sorry, but I don't remember anything.")
 
 
         def play_riddle_game():
@@ -342,7 +503,24 @@ if __name__ == "__main__":
             "exit": exit_program,
             "play riddle game":play_riddle_game,
             "search chat gpt":chatgpt_search,
-            "take screenshot":take_screenshot
+            "take screenshot":take_screenshot,
+            "check weather": open_weather,
+            "remember this": remember_command,
+            "what do you remember": retrieve_remembered_item,
+            "maximize":maximize_application,
+            "minimize":minimize_application,
+            "minimise":minimize_application,
+            "close":close_application,
+            "minimize all":show_desktop,
+            "play":press_space,
+            "pause pause":press_space,
+            "pause":press_space,
+            "space":press_space,
+            "increase volume":volume_increase,
+            "decrease volume":volume_decrease,
+            "open spotify":open_spotify
+
+
         }
 
 

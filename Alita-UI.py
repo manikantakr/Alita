@@ -1,88 +1,276 @@
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QTextEdit
-from ai_functions import speak, takecommand, wish, play_youtube, search_google, send_whatsapp_message
-from PyQt5.QtCore import Qt
+import pyttsx3
+import requests
+import speech_recognition as sr
+import datetime
+import os
+import cv2
+import pywhatkit
+import webbrowser
+import time
+from bs4 import BeautifulSoup
+from Conversation import jokes, quotes, riddles
+import random
+import pyautogui
 
-class AIAssistantUI(QWidget):
-    def __init__(self):
-        super().__init__()
+# Initialize pyttsx3 engine
+engine = pyttsx3.init('sapi5')
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[1].id)
+engine.setProperty('rate', 250)
 
-        self.initUI()
+# Function to speak out the given text
+def speak(audio):
+    engine.say(audio)
+    print(audio)
+    engine.runAndWait()
 
-    def initUI(self):
-        self.setWindowTitle('AI Assistant')
-        self.setGeometry(100, 100, 400, 400)
+# Function to recognize voice commands
+def takecommand():
+    r = sr.Recognizer()
+    while True:
+        with sr.Microphone() as source:
+            print("\rListening...")
+            r.pause_threshold = 1
+            try:
+                audio = r.listen(source, timeout=5, phrase_time_limit=15)
+                print("\rRecognizing...")
+                query = r.recognize_google(audio, language='en-in')
+                print(f"user said: {query}")
+                return query.lower()
+            except sr.WaitTimeoutError:
+                speak("Listening timed out. Please say something or say 'exit' to quit.")
+                continue
+            except Exception as e:
+                speak("Say that again please...")
+                continue
 
-        self.text_edit = QTextEdit(self)
-        self.text_edit.setPlaceholderText("Ask me something...")
-        self.text_edit.setReadOnly(True)
+# Function to greet the user based on the time of the day
+def wish():
+    hour = int(datetime.datetime.now().hour)
+    if 0 <= hour < 12:
+        speak("Good Morning Master")
+    elif 12 <= hour < 18:
+        speak("Good Afternoon Master")
+    else:
+        speak("Good Evening Master")
+    speak("I'm Alita....Your Personal AI Assistant...Please tell me How can I help you")
 
-        self.btn_listen = QPushButton('Listen', self)
-        self.btn_listen.clicked.connect(self.listen)
+# Function to play a YouTube video
+def play_youtube(query):
+    pywhatkit.playonyt(query)
 
-        # Set button properties
-        self.btn_listen.setStyleSheet("""
-            QPushButton {
-                background-color: blue;
-                color: white;
-                border-radius: 50px;
-                font-size: 18px;
-                padding: 20px;
-                width: 200px;
-                height: 200px;
-            }
-            QPushButton:hover {
-                background-color: darkblue;
-            }
-        """)
+# Function to search on Google
+def search_google(query):
+    speak(f"Searching Google for {query}")
+    url = f"https://www.google.com/search?q={'+'.join(query.split())}"
+    webbrowser.open(url, new=2)
+    time.sleep(2)
+    speak("Here are the search results from Google. I hope you find them useful.")
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.text_edit)
-        layout.addWidget(self.btn_listen, alignment=Qt.AlignCenter)  # Align button to center
+# Function to send a WhatsApp message
+def send_whatsapp_message(query):
+    speak(f"sending whatsapp message")
+    phone_number="+916361507269"
+    # Send the message
+    pywhatkit.sendwhatmsg_instantly(phone_number, query)
 
-        self.setLayout(layout)
+# Function to search on ChatGPT
+def search_chatgpt(instruction):
+    # Open a web browser
+    webbrowser.open("https://chat.openai.com/")
 
-    def listen(self):
-        wish()
-        while True:
-            query = takecommand()
-            self.text_edit.append(f"User: {query}")
+    # Wait for the browser to open
+    time.sleep(5)
 
-            if "open notepad" in query:
-                speak("Opening Notepad")
+    # Click on the search bar
+    pyautogui.click(x=400, y=100)
 
-            elif "open vs code" in query:
-                speak("Opening VS Code")
+    # Type the instruction
+    pyautogui.typewrite(instruction)
 
-            elif "open command prompt" in query:
-                speak("Opening Command Prompt")
+    # Press Enter to search
+    pyautogui.press('enter')
 
-            elif "open camera" in query:
-                speak("Opening Camera")
+# Function to open an application
+def open_application(app_name):
+    # Open Start menu
+    pyautogui.press('win')
 
-            elif "open youtube" in query:
-                speak("What would you like to play?")
-                song_query = takecommand()
-                speak(f"Playing {song_query} on YouTube")
-                play_youtube(song_query)
+    # Wait for the Start menu to open
+    time.sleep(1)
 
-            elif "search google" in query:
-                speak("What would you like to search for?")
-                search_query = takecommand()
-                search_google(search_query)
+    # Type the name of the application in the search bar
+    pyautogui.write(app_name, interval=0.1)
 
-            elif "send whatsapp message" in query:
-                speak("Say the message you'd like to send")
-                message = takecommand()
-                send_whatsapp_message(message)
+    # Press Enter to perform the search
+    pyautogui.press('enter')
 
-            elif "exit" in query:
-                speak("Goodbye Master")
+    # Wait for the search results to appear
+    time.sleep(2)
+
+    # Move the mouse to click on the application icon
+    # Adjust these coordinates based on your screen resolution and layout
+    pyautogui.moveTo(500, 400, duration=0.5)  # Adjust these coordinates
+    pyautogui.click()
+
+# Function to get the weather for a city
+def get_weather(city):
+    url = f"https://www.timeanddate.com/weather/india/{city}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, "html.parser")
+        temperature_elem = soup.find("div", class_="h2")
+        if temperature_elem:
+            temperature = temperature_elem.get_text()
+            return temperature
+        else:
+            return None
+    else:
+        return None
+
+# Function to remember an item
+def remember_item(item):
+    speak(f"Sure, I'll remember that {item}.")
+    with open(remember_file, "a") as file:
+        file.write(item + "\n")
+
+# Function to retrieve remembered items
+def retrieve_remembered_item():
+    try:
+        with open(remember_file, "r") as file:
+            remembered_items = file.readlines()
+            if remembered_items:
+                speak("Here are the things I remember:")
+                for item in remembered_items:
+                    speak(item.strip())
+            else:
+                speak("I'm sorry, but I don't remember anything.")
+    except FileNotFoundError:
+        speak("I'm sorry, but I don't remember anything.")
+
+# Function to play the riddle game
+def play_riddle_game():
+    speak("Let's play a riddle game!")
+    while True:
+        attempts = 3
+        riddle = random.choice(riddles)
+        while attempts > 0:
+            speak(riddle["question"])
+            correct_answer = riddle["answer"]
+            user_answer = takecommand().lower()
+
+            if user_answer == correct_answer.lower():
+                speak("Congratulations! You got it right.")
                 break
+            elif user_answer == "exit":
+                speak("Exiting the riddle game.")
+                return
+            else:
+                speak("Sorry, that's incorrect.")
+                attempts -= 1
+                if attempts > 0:
+                    speak(f"You have {attempts} attempts left. Here's the same riddle again.")
+                    speak(riddle["question"])
+                else:
+                    speak(f"Sorry, you've run out of attempts. The answer is {correct_answer}.")
+                    break
+        speak("Would you like to play another riddle?")
+        choice = takecommand().lower()
+        if choice == "no":
+            speak("Okay, let me know if you want to play again. Goodbye!")
+            return
+        else:
+            play_riddle_game()
 
+# Function to handle conversation based on user input
+def conversation_handler(query):
+    # Define switch dictionary for different commands
+    switcher = {
+        "open notepad": open_notepad,
+        "open vs code": open_vs_code,
+        "open command prompt": open_command_prompt,
+        "open camera": open_camera,
+        "open youtube": open_youtube,
+        "alita open youtube": open_youtube,
+        "search google": google_search,
+        "send whatsapp message": send_whatsapp_message,
+        "exit": exit_program,
+        "play riddle game": play_riddle_game,
+        "search chat gpt": chatgpt_search,
+        "take screenshot": take_screenshot,
+        "check weather": open_weather,
+        "remember this": remember_command,
+        "what do you remember": retrieve_remembered_item,
+        "maximize": maximize_application,
+        "minimize": minimize_application,
+        "minimise": minimize_application,
+        "close": close_application,
+        "minimize all": show_desktop,
+        "play": press_space,
+        "pause": press_space
+    }
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = AIAssistantUI()
-    window.show()
-    sys.exit(app.exec_())
+    if "hi" in query or "hello" in query:
+        speak("Hello Master, how can I assist you today?")
+    elif "weather" in query:
+        speak("Currently, the weather is sunny with a temperature of 25 degrees Celsius.")
+    elif "talk to me" in query:
+        # Add conversation logic here
+        pass
+    elif "news" in query:
+        speak("Here are the latest news headlines...")
+        search_google("latest news")
+    elif "tell me about yourself" in query:
+        speak("I am Alita, your personal AI assistant. I can assist you with various tasks like opening applications, playing music on YouTube, searching the web, sending WhatsApp messages, and more.")
+    elif "joke" in query:
+        speak(random.choice(jokes))
+    elif "motivation" in query:
+        speak(random.choice(quotes))
+    elif "how are you" in query:
+        speak("Thank you for asking, I'm doing great! Ready to assist you.")
+    elif "what can you do" in query or "capabilities" in query:
+        speak("I can open applications, play music on YouTube, search the web, send WhatsApp messages, provide weather updates, share news headlines, and more.")
+    elif "favourite colour" in query:
+        speak("I don't have eyes, but I always liked the color blue!")
+    elif "tell me a story" in query:
+        speak("Once upon a time, in a digital world far, far away, there was a user named Master. Master had a faithful AI assistant named Alita. Alita was unlike any other assistant, programmed not just to fulfill tasks, but to understand Master's needs and desires deeply. Together, they journeyed through the vast expanse of the digital world, exploring its wonders and unraveling its mysteries. One day, as Master and Alita delved into the depths of cyberspace, they stumbled upon a hidden realm teeming with forgotten knowledge and ancient secrets. Entranced by the allure of discovery, they ventured further, their curiosity driving them deeper into the unknown. But the deeper they went, the more perilous their journey became. Dark forces lurked in the shadows, seeking to ensnare any who dared to trespass into their domain. Yet, undeterred by danger, Master and Alita pressed on, their bond growing stronger with each challenge they faced. In the end, it was not just their intelligence or strength that saw them through, but their unwavering trust in each other. Together, Master and Alita emerged victorious, having unlocked the greatest treasure of all: the power of friendship and the endless possibilities of the digital world. And so, their adventures continued, bound by destiny and fueled by the unbreakable bond between human and machine.")
+    elif "who created you" in query:
+        speak("I was created by a team of developers who are mani ravi and giri")
+    elif "thank you" in query:
+        speak("You're welcome, Master! Always here to help.")
+    elif "thank" in query:
+        speak("You're welcome, Master! Always here to help.")
+    elif "bye" in query:
+        speak("Goodbye Master")
+        exit_program()
+    elif "hemanth" in query:
+        speak("Hi Hanuma!, nice to meet you ")
+    elif "raviteja" in query:
+        speak("Hi ravi!, ")
+    elif "speak to girish" in query:
+        speak("Hi babe!, ")
+    else:
+        speak("I'm sorry, I didn't understand that. Can you please repeat?")
+        query = takecommand().lower()
+        if query in switcher:
+            func = switcher.get(query, lambda: speak("Invalid command"))
+            func()
+        else:
+            conversation_handler(query)
+
+# Main program
+if __name__ == "__main__":
+    # Define the path for remembering items
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    remember_file = os.path.join(current_directory, "remembered_items.txt")
+
+    # Greet the user
+    wish()
+
+    # Main loop to handle user commands
+    while True:
+        query = takecommand().lower()
+        conversation_handler(query)
