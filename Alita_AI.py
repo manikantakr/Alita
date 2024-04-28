@@ -175,6 +175,24 @@ def decrease_volume(decrement):
     new_volume = max(0.0, current_volume - decrement)
     volume.SetMasterVolumeLevelScalar(new_volume, None)
 
+def get_news_headlines():
+    try:
+        speak("Here are the latest news headlines:")
+        url = "https://www.ndtv.com/india"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, "html.parser")
+            news_headlines = soup.find_all("h2", class_="newsHdng")
+            for index, headline in enumerate(news_headlines[:5], start=1):
+                speak(f"News {index}: {headline.text.strip()}")
+        else:
+            speak("Sorry, I couldn't fetch the news headlines at the moment. Please try again later.")
+    except Exception as e:
+        speak("Sorry, I encountered an error while fetching the news headlines. Please try again later.")
+
 
 if __name__ == "__main__":
 
@@ -518,8 +536,8 @@ if __name__ == "__main__":
             "space":press_space,
             "increase volume":volume_increase,
             "decrease volume":volume_decrease,
-            "open spotify":open_spotify
-
+            "open spotify":open_spotify,
+            "check news":get_news_headlines
 
         }
 
