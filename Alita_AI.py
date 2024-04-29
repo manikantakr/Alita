@@ -19,7 +19,7 @@ from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 engine = pyttsx3.init('sapi5')
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[1].id)
-engine.setProperty('rate', 250)
+engine.setProperty('rate', 200)
 
 
 def speak(audio):
@@ -90,12 +90,38 @@ def search_google(query):
     webbrowser.open(url, new=2)
     time.sleep(2)
     speak("Here are the search results from Google. I hope you find them useful.")
+def send_whatsapp_message_auto():
+    speak("Whom do you want to send the message to?")
+    recipient_name = takecommand()
+    if recipient_name == "":
+        return
+    speak(f"Recipient's name is {recipient_name}")
 
-def send_whatsapp_message(query):
-    speak(f"sending whatsapp message")
-    phone_number="+916361507269"
-    # Send the message
-    pywhatkit.sendwhatmsg_instantly(phone_number, query)
+    speak("What message do you want to send?")
+    message = takecommand()
+    if message == "":
+        return
+    speak(f"Message is: {message}")
+
+    pyautogui.press('win')
+    time.sleep(1)
+    pyautogui.write('whatsapp', interval=0.1)
+    time.sleep(1)
+    pyautogui.press('enter')
+    time.sleep(1)
+
+    pyautogui.click(x=350, y=150)
+    time.sleep(1)
+
+    pyautogui.write(recipient_name, interval=0.1)
+    time.sleep(3)
+
+    pyautogui.press('down')
+    pyautogui.press('enter')
+    time.sleep(3)
+
+    pyautogui.write(message, interval=0.1)
+    pyautogui.press('enter')
 
 
 def search_chatgpt(instruction):
@@ -285,10 +311,6 @@ if __name__ == "__main__":
             search_google(search_query)
 
 
-        def send_whatsapp_message():
-            speak("Say the message you'd like to send")
-            message = takecommand()
-            send_whatsapp_message(message)
 
         def chatgpt_search():
             speak("What would you like to search for?")
@@ -517,7 +539,7 @@ if __name__ == "__main__":
             "open youtube": open_youtube,
             "alita open youtube": open_youtube,
             "search google": google_search,
-            "send whatsapp message": send_whatsapp_message,
+            "send whatsapp message": send_whatsapp_message_auto,
             "exit": exit_program,
             "play riddle game":play_riddle_game,
             "search chat gpt":chatgpt_search,
