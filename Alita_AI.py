@@ -14,6 +14,7 @@ import pyautogui
 from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+import math
 
 
 engine = pyttsx3.init('sapi5')
@@ -55,10 +56,16 @@ def takecommand():
                 print("Recognizing...")
                 query = r.recognize_google(audio, language='en-in')
                 print(f"user said: {query}")
+
                 if "wait" in query.lower():
                     speak("Waiting for your command...")
                     wait_until_alita()
                     speak("Resuming...")
+                    continue
+
+                if "calculate" in query.lower():
+                    expression = query.lower().split("calculate", 1)[-1].strip()
+                    calculate_math_expression(expression)
                     continue
                 return query.lower()
             except sr.WaitTimeoutError:
@@ -158,10 +165,6 @@ def open_application(app_name):
     # Wait for the search results to appear
     time.sleep(2)
 
-    # Move the mouse to click on the application icon
-    # Adjust these coordinates based on your screen resolution and layout
-    pyautogui.moveTo(500, 400, duration=0.5)  # Adjust these coordinates
-    pyautogui.click()
 
 # Example usage
 
@@ -220,6 +223,110 @@ def get_news_headlines():
         speak("Sorry, I encountered an error while fetching the news headlines. Please try again later.")
 
 
+def calculate_math_expression(expression):
+    try:
+        expression = expression.replace("x", "*")
+
+        if "square root of" in expression:
+            number = int(expression.split("square root of")[1])
+            result = math.sqrt(number)
+            speak(f"The square root of {number} is {result}")
+        elif "cube root of" in expression:
+            number = int(expression.split("cube root of")[1])
+            result = number ** (1 / 3)
+            speak(f"The cube root of {number} is {result}")
+        else:
+            result = eval(expression)
+            speak(f"The result of {expression} is {result}")
+    except Exception as e:
+        speak("Sorry, I couldn't calculate that. Please provide a valid mathematical expression.")
+
+def scroll_up():
+    time.sleep(1)
+    pyautogui.scroll(250)
+    speak("scrolled up")
+
+def scroll_down():
+    time.sleep(1)
+    pyautogui.scroll(-250)
+    speak("scrolled down")
+
+def click_left():
+    speak("clicking left")
+    pyautogui.press("left")
+
+def click_right():
+    speak("clicking right")
+    pyautogui.press("right")
+
+def click_up():
+    speak("clicking up")
+    pyautogui.press("up")
+
+def click_down():
+    speak("clicking down")
+    pyautogui.press("down")
+
+def click_enter():
+    speak("clicking enter")
+    pyautogui.press("enter")
+
+
+def open_word():
+    speak("Opening  word")
+    open_application("word")
+
+def open_powerpoint():
+    speak("Opening  power point")
+    open_application("powerpoint")
+
+def open_excel():
+    speak("Opening excel")
+    open_application("excel")
+
+def open_calender():
+    speak("Opening calender")
+    open_application("calender")
+
+def open_calculator():
+    speak("opening calculator")
+    open_application("calculator")
+
+def open_amazon_prime_video():
+    speak("opening amazon prime video")
+    open_application("prime video")
+def open_netflix():
+    speak("opening netflix")
+    open_application("netflix")
+def open_mail():
+    speak("opening mail")
+    open_application("mail")
+def open_teams():
+    speak("opening teams")
+    open_application("teams")
+def open_settings():
+    speak("opening settings")
+    open_application("settings")
+def open_control_panel():
+    speak("opening control panle")
+    open_application("control panel")
+def open_task_manager():
+    speak("opening task manager")
+    open_application("task manager")
+def open_photos():
+    speak("opening photos")
+    open_application("photos")
+def open_pycharm():
+    speak("opening pycharm")
+    open_application("pycharm")
+def open_linkedin():
+    speak("opening linkedin")
+    open_application("linkedin")
+def open_clock():
+    speak("opening clock")
+    open_application("clock")
+
+
 if __name__ == "__main__":
 
     wish()
@@ -265,7 +372,6 @@ if __name__ == "__main__":
         def maximize_application():
             # Assuming the application is already focused
             pyautogui.hotkey('win', 'up')
-
 
 
         def open_notepad():
@@ -537,7 +643,6 @@ if __name__ == "__main__":
             "open command prompt": open_command_prompt,
             "open camera": open_camera,
             "open youtube": open_youtube,
-            "alita open youtube": open_youtube,
             "search google": google_search,
             "send whatsapp message": send_whatsapp_message_auto,
             "exit": exit_program,
@@ -559,7 +664,86 @@ if __name__ == "__main__":
             "increase volume":volume_increase,
             "decrease volume":volume_decrease,
             "open spotify":open_spotify,
-            "check news":get_news_headlines
+            "check news":get_news_headlines,
+            "scroll up":scroll_up,
+            "scroll down":scroll_down,
+            "open word":open_word,
+            "open power point ":open_powerpoint,
+            "open excel":open_excel,
+            "open calender":open_calender,
+            "open calculator":open_calculator,
+            "open amazon prime video":open_amazon_prime_video,
+            "open netflix":open_netflix,
+            "open email":open_mail,
+            "open mail":open_mail,
+            "open teams":open_teams,
+            "open settings":open_settings,
+            "open control panel":open_control_panel,
+            "open task manager":open_task_manager,
+            "open photos":open_photos,
+            "open pie chart": open_pycharm,
+            "open python": open_pycharm,
+            "open clock":open_clock,
+            "open linkedin":open_linkedin,
+            "click left":click_left,
+            "click right":click_right,
+            "click up":click_up,
+            "click down":click_down,
+            "click enter":click_enter,
+
+            "alita open notepad": open_notepad,
+            "alita open vs code": open_vs_code,
+            "alita open command prompt": open_command_prompt,
+            "alita open camera": open_camera,
+            "alita open youtube": open_youtube,
+            "alita alita open youtube": open_youtube,
+            "alita search google": google_search,
+            "alita send whatsapp message": send_whatsapp_message_auto,
+            "alita exit": exit_program,
+            "alita play riddle game": play_riddle_game,
+            "alita search chat gpt": chatgpt_search,
+            "alita take screenshot": take_screenshot,
+            "alita check weather": open_weather,
+            "alita remember this": remember_command,
+            "alita what do you remember": retrieve_remembered_item,
+            "alita maximize": maximize_application,
+            "alita minimize": minimize_application,
+            "alita minimise": minimize_application,
+            "alita close": close_application,
+            "alita minimize all": show_desktop,
+            "alita play": press_space,
+            "alita pause pause": press_space,
+            "alita pause": press_space,
+            "alita space": press_space,
+            "alita increase volume": volume_increase,
+            "alita decrease volume": volume_decrease,
+            "alita open spotify": open_spotify,
+            "alita check news": get_news_headlines,
+            "alita scroll up": scroll_up,
+            "alita scroll down": scroll_down,
+            "alita open word": open_word,
+            "alita open power point ": open_powerpoint,
+            "alita open excel": open_excel,
+            "alita open calender": open_calender,
+            "alita open calculator": open_calculator,
+            "alita open amazon prime video": open_amazon_prime_video,
+            "alita open netflix": open_netflix,
+            "alita open email": open_mail,
+            "alita open mail": open_mail,
+            "alita open teams": open_teams,
+            "alita open settings": open_settings,
+            "alita open control panel": open_control_panel,
+            "alita open task manager": open_task_manager,
+            "alita open photos": open_photos,
+            "alita open pie chart": open_pycharm,
+            "alita open python":open_pycharm,
+            "alita open clock": open_clock,
+            "alita open linkedin": open_linkedin,
+            "alita click left": click_left,
+            "alita click right": click_right,
+            "alita click up": click_up,
+            "alita click down": click_down,
+            "alita click enter": click_enter
 
         }
 
