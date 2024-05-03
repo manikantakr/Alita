@@ -295,33 +295,43 @@ def open_calculator():
 def open_amazon_prime_video():
     speak("opening amazon prime video")
     open_application("prime video")
+
 def open_netflix():
     speak("opening netflix")
     open_application("netflix")
+
 def open_mail():
     speak("opening mail")
     open_application("mail")
+
 def open_teams():
     speak("opening teams")
     open_application("teams")
+
 def open_settings():
     speak("opening settings")
     open_application("settings")
+
 def open_control_panel():
     speak("opening control panle")
     open_application("control panel")
+
 def open_task_manager():
     speak("opening task manager")
     open_application("task manager")
+
 def open_photos():
     speak("opening photos")
     open_application("photos")
+
 def open_pycharm():
     speak("opening pycharm")
     open_application("pycharm")
+
 def open_linkedin():
     speak("opening linkedin")
     open_application("linkedin")
+
 def open_clock():
     speak("opening clock")
     open_application("clock")
